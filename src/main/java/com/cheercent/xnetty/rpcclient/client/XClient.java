@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.fastjson.JSONObject;
 import com.cheercent.xnetty.rpcclient.message.MessageDecoder;
 import com.cheercent.xnetty.rpcclient.message.MessageEncoder;
+import com.cheercent.xnetty.rpcclient.message.MessageFactory.MessageResponse;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
@@ -46,11 +47,15 @@ public class XClient {
     private NioEventLoopGroup eventLoopGroup;
     
     private ChannelFuture channelFuture;
+    
+    private final XResponseListener responseListener;
 
-    public XClient(Properties properties) {
+    public XClient(Properties properties, XResponseListener listener) {
     	serverIP = properties.getProperty("server.ip").trim();
 		serverPort = Integer.parseInt(properties.getProperty("server.port").trim());
 
+		responseListener = listener;
+		
         bootstrap = new Bootstrap();
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connTimeout);
@@ -67,7 +72,7 @@ public class XClient {
                 cp.addLast(new MessageEncoder());
                 cp.addLast(new LengthFieldBasedFrameDecoder(1024*1024*10, 0, 4, 0, 0));
                 cp.addLast(new MessageDecoder());
-                cp.addLast(new XClientHandler());
+                cp.addLast(new XClientHandler(responseListener));
             }
         };
         eventLoopGroup = new NioEventLoopGroup(1, new DefaultThreadFactory(serverIP.substring(serverIP.lastIndexOf(".")+1)+"-"+serverPort+"-client-ip"));
@@ -137,4 +142,9 @@ public class XClient {
     	return channelFuture==null || !channelFuture.isSuccess() || !channelFuture.channel().isActive() || this.eventLoopGroup.isShutdown();
     }
 
+	public interface XResponseListener {
+
+		public void onResponse(MessageResponse request);
+		
+	}
 }

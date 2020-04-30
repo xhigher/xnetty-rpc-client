@@ -9,7 +9,9 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.cheercent.xnetty.rpcclient.client.SimpleResponseListener;
 import com.cheercent.xnetty.rpcclient.client.XClient;
+import com.cheercent.xnetty.rpcclient.client.XClient.XResponseListener;
 import com.cheercent.xnetty.rpcclient.message.MessageFactory;
 import com.cheercent.xnetty.rpcclient.message.MessageFactory.MessageRequest;
 
@@ -30,7 +32,9 @@ public class XStarter {
 				is.close();
 			}
 			
-			final XClient client = new XClient(properties);
+			XResponseListener responseListener = new SimpleResponseListener();
+			
+			final XClient client = new XClient(properties, responseListener);
 			
 	        scheduledService.scheduleAtFixedRate(new Runnable() {
 

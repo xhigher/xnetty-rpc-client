@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSONObject;
+import com.cheercent.xnetty.rpcclient.client.XClient.XResponseListener;
 import com.cheercent.xnetty.rpcclient.message.MessageFactory;
 import com.cheercent.xnetty.rpcclient.message.MessageFactory.MessageResponse;
 
@@ -14,6 +15,12 @@ public class XClientHandler extends SimpleChannelInboundHandler<JSONObject> {
     
 	private static final Logger logger = LoggerFactory.getLogger(XClientHandler.class);
 
+    private XResponseListener responseListener;
+    
+    public XClientHandler(XResponseListener listener) {
+    	responseListener = listener; 
+    }
+    
     @Override
     public void channelRead0(ChannelHandlerContext ctx, JSONObject data) throws Exception {
     	logger.info("channelRead0: data = {}", data.toString());
@@ -21,7 +28,7 @@ public class XClientHandler extends SimpleChannelInboundHandler<JSONObject> {
     	if(response != null) {
             try {
             	if(!MessageFactory.isHeartBeatMessage(response.getRequestid())) {
-            		
+            		responseListener.onResponse(response);
             	}
             } finally {
                
