@@ -6,9 +6,9 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSONObject;
 import com.cheercent.xnetty.rpcclient.message.MessageDecoder;
 import com.cheercent.xnetty.rpcclient.message.MessageEncoder;
+import com.cheercent.xnetty.rpcclient.message.MessageFactory.MessageRequest;
 import com.cheercent.xnetty.rpcclient.message.MessageFactory.MessageResponse;
 
 import io.netty.bootstrap.Bootstrap;
@@ -72,7 +72,7 @@ public class XClient {
                 cp.addLast(new MessageEncoder());
                 cp.addLast(new LengthFieldBasedFrameDecoder(1024*1024*10, 0, 4, 0, 0));
                 cp.addLast(new MessageDecoder());
-                cp.addLast(new XClientHandler(responseListener));
+                cp.addLast(new XClientHandler(XClient.this, responseListener));
             }
         };
         eventLoopGroup = new NioEventLoopGroup(1, new DefaultThreadFactory(serverIP.substring(serverIP.lastIndexOf(".")+1)+"-"+serverPort+"-client-ip"));
@@ -119,12 +119,22 @@ public class XClient {
     	return null;
     }
     
-    public void send(JSONObject data) {
-    	ChannelFuture channelFuture = getChannelFuture();
-    	if (channelFuture != null && channelFuture.isSuccess() && channelFuture.channel().isActive()) {
-    		logger.info("send request = {}", data.toString());
-        	channelFuture.channel().writeAndFlush(data);
-        }
+    public void tryToReconnect() {
+    	if(channelFuture != null) {
+    		if(channelFuture.isSuccess()) {
+    			channelFuture.channel().close();
+				channelFuture = this.connect();
+            }
+    	}
+    }
+    
+    public void sendMessage(MessageRequest request) {
+    	if(request != null) {
+    		ChannelFuture channelFuture = getChannelFuture();
+        	if (channelFuture != null && channelFuture.isSuccess() && channelFuture.channel().isActive()) {
+            	channelFuture.channel().writeAndFlush(request.toJSONObject());
+            }
+    	}
     }
 
     public void shutdown() {

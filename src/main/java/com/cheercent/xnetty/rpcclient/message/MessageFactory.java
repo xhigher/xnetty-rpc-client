@@ -33,7 +33,7 @@ public class MessageFactory {
 		return true;
 	}
 	
-	public static MessageRequest getHeartBeatMessage() {
+	public static MessageRequest newHeartBeatMessage() {
 		MessageRequest request = new MessageRequest(REQUESTID_HEARTBEAT);
 		return request;
 	}

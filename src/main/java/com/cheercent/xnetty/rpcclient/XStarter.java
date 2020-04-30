@@ -44,7 +44,7 @@ public class XStarter {
 					MessageRequest request = MessageFactory.newMessageRequest(requestid);
 					request.setModule("user");
 					request.setAction("info");
-					client.send(request.toJSONObject());
+					client.sendMessage(request);
 				}
 	        	
 	        }, 10, 10, TimeUnit.SECONDS);

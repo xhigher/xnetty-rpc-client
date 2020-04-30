@@ -10,15 +10,22 @@ import com.cheercent.xnetty.rpcclient.message.MessageFactory.MessageResponse;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.handler.timeout.IdleState;
+import io.netty.handler.timeout.IdleStateEvent;
 
 public class XClientHandler extends SimpleChannelInboundHandler<JSONObject> {
     
 	private static final Logger logger = LoggerFactory.getLogger(XClientHandler.class);
 
+	private int lostEchoCount = 0;
+	
+	private XClient client;
+	
     private XResponseListener responseListener;
     
-    public XClientHandler(XResponseListener listener) {
-    	responseListener = listener; 
+    public XClientHandler(XClient client, XResponseListener listener) {
+    	this.client = client;
+    	this.responseListener = listener; 
     }
     
     @Override
@@ -36,11 +43,32 @@ public class XClientHandler extends SimpleChannelInboundHandler<JSONObject> {
     	}
     	
     }
+    
+    @Override
+    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+        if (evt instanceof IdleStateEvent){
+            IdleStateEvent event = (IdleStateEvent)evt;
+            if (event.state() == IdleState.READER_IDLE){
+            	try {
+                    lostEchoCount ++;
+                    if (lostEchoCount > 2){
+                    	lostEchoCount = 0;
+                        this.client.tryToReconnect();
+                    }else {
+                        ctx.writeAndFlush(MessageFactory.newHeartBeatMessage().toJSONObject());
+                    }
+            	}catch(Exception e) {
+            		lostEchoCount = 0;
+            		logger.error(ctx.channel().remoteAddress().toString(), e);
+            		this.client.tryToReconnect();
+            	}
+            }
+        }
+    }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         logger.error(ctx.channel().remoteAddress().toString(), cause);
-        //ctx.close();
     }
     
     @Override
