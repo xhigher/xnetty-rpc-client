@@ -36,6 +36,7 @@ public class XStarter {
 			
 			final XClient client = new XClient(properties, responseListener);
 			
+			//test begin
 	        scheduledService.scheduleAtFixedRate(new Runnable() {
 
 				public void run() {
@@ -48,6 +49,7 @@ public class XStarter {
 				}
 	        	
 	        }, 10, 10, TimeUnit.SECONDS);
+			//test end
 			
 		}catch(Exception e){
 			logger.error("Exception:", e);
