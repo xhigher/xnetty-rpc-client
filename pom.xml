@@ -7,7 +7,7 @@
   <version>0.0.1-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>flink</name>
+  <name>xnetty-rpc-client</name>
   <url>http://maven.apache.org</url>
 
   <properties>
